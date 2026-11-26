@@ -9,6 +9,7 @@ import {
   Clock,
   Flag,
   ListChecks,
+  RotateCcw,
   Send,
   X,
 } from '@lucide/vue'
@@ -36,6 +37,7 @@ const ready = ref(false)
 const now = ref(Date.now())
 const showConfirm = ref(false)
 const showInterstitial = ref(false)
+const showResetConfirm = ref(false)
 const interstitialElement = ref<ElementId | null>(null)
 const submitting = ref(false)
 let timer: ReturnType<typeof setInterval> | null = null
@@ -138,6 +140,7 @@ async function submitElement(force = false) {
 
   submitting.value = true
   showConfirm.value = false
+  showResetConfirm.value = false
   attempt.value.submittedAt = Date.now()
 
   if (isLastElement.value) {
@@ -166,6 +169,15 @@ function continueNext() {
   now.value = Date.now()
 }
 
+async function resetExam() {
+  const track = session.value?.config.track ?? 'C'
+  showResetConfirm.value = false
+  showConfirm.value = false
+  clearSession()
+  session.value = null
+  await navigateTo(`/exam?track=${track}`)
+}
+
 function warnBeforeUnload(event: BeforeUnloadEvent) {
   if (session.value && !showInterstitial.value) {
     event.preventDefault()
@@ -174,7 +186,7 @@ function warnBeforeUnload(event: BeforeUnloadEvent) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (showConfirm.value || showInterstitial.value) return
+  if (showConfirm.value || showInterstitial.value || showResetConfirm.value) return
   const key = event.key.toLowerCase()
   if (['1', '2', '3', '4'].includes(key)) {
     event.preventDefault()
@@ -298,6 +310,15 @@ onBeforeUnmount(() => {
               Review in the meantime
             </NuxtLink>
           </div>
+
+          <button
+            type="button"
+            class="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-ink-500 transition-colors hover:text-fail-500"
+            @click="showResetConfirm = true"
+          >
+            <RotateCcw class="h-3.5 w-3.5" aria-hidden="true" />
+            Reset this attempt
+          </button>
         </div>
       </div>
     </template>
@@ -332,6 +353,15 @@ onBeforeUnmount(() => {
                 {{ answered }}<span class="text-sm text-paper-100/40">/{{ total }}</span>
               </p>
             </div>
+            <button
+              type="button"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-paper-100/60 transition-colors hover:border-white/30 hover:text-white"
+              aria-label="Reset exam"
+              title="Reset exam"
+              @click="showResetConfirm = true"
+            >
+              <RotateCcw class="h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
         </div>
         <div class="mt-4 h-1 overflow-hidden rounded-full bg-white/10">
@@ -483,6 +513,15 @@ onBeforeUnmount(() => {
             <Send class="h-4 w-4" aria-hidden="true" />
           </button>
 
+          <button
+            type="button"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-paper-300 px-5 py-3 text-sm font-medium text-ink-600 transition-colors hover:border-ink-500 hover:text-ink-900"
+            @click="showResetConfirm = true"
+          >
+            <RotateCcw class="h-4 w-4" aria-hidden="true" />
+            Reset exam
+          </button>
+
           <div class="rounded-xl border border-paper-300 bg-paper-100 p-4">
             <p class="flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-ink-500">
               <ListChecks class="h-3.5 w-3.5" aria-hidden="true" />
@@ -533,5 +572,16 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="showResetConfirm"
+      title="Reset this exam?"
+      description="This clears every answer, flag, and the current element for this attempt, then returns you to the setup page. It cannot be undone."
+      confirm-label="Reset exam"
+      cancel-label="Keep exam"
+      tone="danger"
+      @cancel="showResetConfirm = false"
+      @confirm="resetExam"
+    />
   </div>
 </template>

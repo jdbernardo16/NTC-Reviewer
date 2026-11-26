@@ -3,12 +3,19 @@ import { Menu, X, ArrowRight } from '@lucide/vue'
 
 const route = useRoute()
 const open = ref(false)
+const { session: activeExam } = useActiveExam()
 
 const links = [
   { label: 'Reviewer', to: '/reviewer' },
   { label: 'Mock exam', to: '/exam' },
   { label: 'Sources', to: '/sources' },
 ]
+
+const activeExamLabel = computed(() => {
+  if (!activeExam.value) return ''
+  const element = activeExam.value.elements[activeExam.value.current]?.element
+  return element ? `E${element}` : 'Live'
+})
 
 const isActive = (to: string) => route.path === to || route.path.startsWith(`${to}/`)
 
@@ -54,16 +61,22 @@ watch(
 
       <div class="flex items-center gap-2">
         <NuxtLink
-          to="/exam"
+          :to="activeExam ? '/exam/take' : '/exam'"
           class="hidden items-center gap-2 rounded-lg bg-signal-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-signal-600 sm:inline-flex"
         >
-          Start mock exam
+          {{ activeExam ? 'Resume exam' : 'Start mock exam' }}
+          <span
+            v-if="activeExam"
+            class="rounded bg-ink-950/20 px-1.5 py-0.5 font-mono text-[0.55rem] uppercase tracking-[0.1em]"
+          >
+            {{ activeExamLabel }}
+          </span>
           <ArrowRight class="h-4 w-4" aria-hidden="true" />
         </NuxtLink>
 
         <button
           type="button"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 text-paper-100 md:hidden"
+          class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 text-paper-100 md:hidden"
           :aria-expanded="open"
           aria-controls="mobile-nav"
           :aria-label="open ? 'Close menu' : 'Open menu'"
@@ -71,6 +84,11 @@ watch(
         >
           <X v-if="open" class="h-5 w-5" aria-hidden="true" />
           <Menu v-else class="h-5 w-5" aria-hidden="true" />
+          <span
+            v-if="activeExam"
+            class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-signal-500"
+            aria-hidden="true"
+          />
         </button>
       </div>
     </div>
@@ -87,10 +105,16 @@ watch(
           {{ link.label }}
         </NuxtLink>
         <NuxtLink
-          to="/exam"
+          :to="activeExam ? '/exam/take' : '/exam'"
           class="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-signal-500 px-4 py-3 text-base font-semibold text-white"
         >
-          Start mock exam
+          {{ activeExam ? 'Resume exam' : 'Start mock exam' }}
+          <span
+            v-if="activeExam"
+            class="rounded bg-ink-950/20 px-1.5 py-0.5 font-mono text-[0.55rem] uppercase tracking-[0.1em]"
+          >
+            {{ activeExamLabel }}
+          </span>
           <ArrowRight class="h-4 w-4" aria-hidden="true" />
         </NuxtLink>
       </nav>

@@ -126,6 +126,8 @@ After the first deploy, check:
 - `/exam` accepts the form and starts a session.
 - Submitting an exam reaches `/exam/result` and the PDF button downloads a file.
 - Refreshing `/exam/take` while a session is active resumes the exam.
+- Navigating to another page mid-exam shows **Resume exam** in the header.
+- **Reset exam** (exam header, between-element screen, or setup banner) clears the session after a confirmation.
 
 The app has no server routes, so there is nothing to configure in Functions or KV.
 

@@ -18,10 +18,8 @@ import {
   buildSession,
   clearSession,
   loadResult,
-  loadSession,
   saveSession,
   type ExamResult,
-  type ExamSession,
 } from '~/utils/exam'
 
 useSeoMeta({
@@ -44,11 +42,12 @@ const form = reactive({
 
 const error = ref('')
 const submitting = ref(false)
-const activeSession = ref<ExamSession | null>(null)
+const { session: activeSession } = useActiveExam()
+const confirmDiscard = ref(false)
+const showReplaceConfirm = ref(false)
 const lastResult = ref<ExamResult | null>(null)
 
 onMounted(() => {
-  activeSession.value = loadSession()
   lastResult.value = loadResult()
 })
 
@@ -59,11 +58,11 @@ function resume() {
 }
 
 function discard() {
+  confirmDiscard.value = false
   clearSession()
-  activeSession.value = null
 }
 
-async function start() {
+async function start(force = false) {
   error.value = ''
   if (form.name.trim().length < 2) {
     error.value = 'Enter the name that should appear on your result.'
@@ -78,6 +77,11 @@ async function start() {
     return
   }
 
+  if (activeSession.value && !force) {
+    showReplaceConfirm.value = true
+    return
+  }
+
   submitting.value = true
   const session = buildSession({
     name: form.name.trim(),
@@ -88,6 +92,11 @@ async function start() {
   })
   saveSession(session)
   await navigateTo('/exam/take')
+}
+
+function replaceAndStart() {
+  showReplaceConfirm.value = false
+  start(true)
 }
 </script>
 
@@ -132,7 +141,7 @@ async function start() {
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-lg border border-paper-300 bg-paper-50 px-4 py-2.5 text-sm font-medium text-ink-700"
-              @click="discard"
+              @click="confirmDiscard = true"
             >
               <RotateCcw class="h-4 w-4" aria-hidden="true" />
               Discard
@@ -142,7 +151,7 @@ async function start() {
       </div>
 
       <div class="grid gap-8 lg:grid-cols-[1fr_22rem] lg:gap-12">
-        <form class="rounded-2xl border border-paper-300 bg-white/50 p-5 md:p-8" novalidate @submit.prevent="start">
+        <form class="rounded-2xl border border-paper-300 bg-white/50 p-5 md:p-8" novalidate @submit.prevent="start()">
           <div class="flex items-center gap-3">
             <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-950 font-mono text-xs font-semibold text-paper-50">
               01
@@ -344,5 +353,27 @@ async function start() {
         </aside>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="confirmDiscard"
+      title="Discard this exam?"
+      description="This clears the saved session and every answer in it. You will start from a blank setup form next time. It cannot be undone."
+      confirm-label="Discard exam"
+      cancel-label="Keep exam"
+      tone="danger"
+      @cancel="confirmDiscard = false"
+      @confirm="discard"
+    />
+
+    <ConfirmDialog
+      :open="showReplaceConfirm"
+      title="Replace the current exam?"
+      description="You already have a mock exam in progress. Starting a new one will discard the saved session and every answer in it."
+      confirm-label="Replace and start"
+      cancel-label="Keep current exam"
+      tone="danger"
+      @cancel="showReplaceConfirm = false"
+      @confirm="replaceAndStart"
+    />
   </div>
 </template>

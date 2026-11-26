@@ -4,6 +4,8 @@ A free, static study companion for the Philippine amateur radio licensure exam â
 
 - **Reviewer:** structured notes for Elements 2, 3, and 4, with tables, formulas, exam traps, and quick self-checks.
 - **Mock exam:** 25 items per element, 40 minutes per element, question flagging, a question map, and per-element scoring.
+- **Resume anywhere:** an in-progress exam survives a refresh, a page change, or a closed tab. The header switches to **Resume exam** with the current element.
+- **Reset with confirmation:** reset the whole attempt from the exam screen, the between-element screen, or the setup banner. Starting a new paper over an active one also asks first.
 - **Result:** pass/fail, 70% average and 50% per-element floor, Class D fallback notice, weak topics, full answer review, and a downloadable PDF.
 - **No sign-in, no backend:** the pre-exam form only personalizes the result. Everything stays in the browser.
 

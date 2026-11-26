@@ -71,8 +71,14 @@ export interface ExamResult {
 
 export const SESSION_KEY = 'ntc-reviewer:session:v1'
 export const RESULT_KEY = 'ntc-reviewer:result:v1'
+export const EXAM_EVENT = 'ntc-reviewer:exam-changed'
 
 export const elementMinutes = EXAM_RULES.minutesPerElement
+
+function notifyExamChanged() {
+  if (!import.meta.client) return
+  window.dispatchEvent(new CustomEvent(EXAM_EVENT))
+}
 
 export function shuffle<T>(items: readonly T[]): T[] {
   const copy = [...items]
@@ -246,11 +252,13 @@ export function saveSession(session: ExamSession) {
   } catch {
     // Storage can fail in private mode or when the quota is full. The exam still works in memory.
   }
+  notifyExamChanged()
 }
 
 export function clearSession() {
   if (!import.meta.client) return
   window.localStorage.removeItem(SESSION_KEY)
+  notifyExamChanged()
 }
 
 export function loadResult(): ExamResult | null {
