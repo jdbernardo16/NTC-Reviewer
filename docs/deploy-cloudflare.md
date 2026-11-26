@@ -28,9 +28,64 @@ Every push to the production branch redeploys. Pull requests get preview URLs au
 
 ### Custom domain
 
-1. In the Pages project → **Custom domains** → **Set up a domain**.
-2. If the domain is already on Cloudflare, the DNS record is created automatically.
-3. If it is on another registrar, add the CNAME that Cloudflare shows you.
+The cleanest setup for an apex domain like `ntcreviewer.online` is to move its DNS to Cloudflare. Cloudflare Pages requires the apex domain to be a zone on the same Cloudflare account as the Pages project. The domain registration and renewal can stay at Hostinger.
+
+#### 1. Add the domain to Cloudflare
+
+1. In the Cloudflare dashboard, select **Add a site**.
+2. Enter `ntcreviewer.online` and choose the **Free** plan.
+3. Review the DNS records Cloudflare imports. Keep genuine records such as MX/TXT if you use Hostinger email. Remove Hostinger parking-page A/CNAME records if they are no longer needed.
+4. Cloudflare gives you two nameservers, for example:
+   - `ada.ns.cloudflare.com`
+   - `bob.ns.cloudflare.com`
+
+#### 2. Change nameservers at Hostinger
+
+1. Open Hostinger **hPanel** → **Domains** → `ntcreviewer.online`.
+2. Open **DNS / Nameservers** → **Change Nameservers**.
+3. Choose the custom nameserver option and enter the two Cloudflare nameservers.
+4. Save.
+
+This moves DNS management to Cloudflare. Domain registration, renewal, and ownership stay with Hostinger. Allow up to 24 hours for propagation; Cloudflare will show the zone as **Active** and email you when it is ready.
+
+#### 3. Attach the domain to Pages
+
+1. Cloudflare dashboard → **Workers & Pages** → your Pages project.
+2. Open **Custom domains** → **Set up a domain**.
+3. Enter `ntcreviewer.online` → **Continue** → **Activate domain**.
+4. Repeat for `www.ntcreviewer.online` if you want both to resolve.
+
+Because the zone is now on Cloudflare, the required CNAME (flattened at the apex) is created automatically. Wait for the domain status to become **Active** and for the certificate to be issued.
+
+#### 4. SSL/TLS
+
+1. Cloudflare → **SSL/TLS** → **Overview** → set the mode to **Full (strict)**.
+2. **Edge Certificates** → enable **Always Use HTTPS**.
+3. Optionally enable **Automatic HTTPS Rewrites**.
+
+#### 5. Redirect `www` to the apex (optional)
+
+Pick one canonical address. To make `https://ntcreviewer.online` canonical:
+
+1. Cloudflare → **Rules** → **Redirect Rules** → **Create rule**.
+2. Use the **Redirect from WWW to root** template, or match:
+   - **When incoming requests match:** `http.host eq "www.ntcreviewer.online"`
+   - **Then redirect to:** `concat("https://ntcreviewer.online", http.request.uri.path)`
+   - **Status code:** `301`
+3. Save and deploy the rule.
+
+Add both domains in Pages first, then apply the redirect. If you prefer `www` as canonical, reverse the direction.
+
+#### If you keep Hostinger DNS
+
+A `www` subdomain can be added as a CNAME pointing to your `<project>.pages.dev` address, but the apex `ntcreviewer.online` will not work reliably without Cloudflare DNS or a provider that supports CNAME flattening/ALIAS at the root. For a domain bought at Hostinger, moving the nameservers to Cloudflare is the simplest path to `https://ntcreviewer.online`.
+
+#### Troubleshooting
+
+- **Domain stuck on “Verifying”**: confirm the Cloudflare nameservers are saved at Hostinger and the zone is Active.
+- **522 or 1014 error**: the Pages custom domain association is missing or the DNS record is wrong. Remove the domain in Pages, then re-add it.
+- **Too many redirects**: check the SSL/TLS mode and make sure the `www` redirect does not loop.
+- **Email stops working**: the nameserver change moves DNS to Cloudflare. Recreate the MX/TXT records Cloudflare imported, or add them manually.
 
 HTTPS is provisioned automatically. No redirect rules are needed for the app routes because Nuxt prerenders every route to its own `index.html`.
 
