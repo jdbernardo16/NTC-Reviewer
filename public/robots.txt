@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+# Exam and result pages carry noindex metadata and contain no server-side data.
